@@ -1,0 +1,12 @@
+.gradle/
+.kotlin/
+build/
+**/build/
+.idea/
+local.properties
+*.iml
+.DS_Store
+kotlin-js-store/
+node_modules/
+.kotlin/
+examples/player/build/

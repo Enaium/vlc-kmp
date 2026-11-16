@@ -1,0 +1,17 @@
+name: Checkout with VLC
+description: Checks out the repository and the pinned VLC submodule over HTTPS.
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Checkout VLC submodule
+      shell: bash
+      run: |
+        # .gitmodules keeps the requested SSH URL; CI has a token for HTTPS
+        # only. The rewrite leaves .gitmodules untouched.
+        git config --global url."https://github.com/".insteadOf git@github.com:
+        git submodule update --init --recursive
+        git -C vlc rev-parse HEAD

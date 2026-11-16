@@ -1,0 +1,9 @@
+headers = vlc_shim.h
+headerFilter = vlc/** vlc_shim.h
+package = cn.enaium.vlc.cinterop
+
+compilerOpts = -DVLC_KMP_CINTEROP=1
+
+# libVLC is resolved by the application at link time. On desktop the package
+# manager provides libvlc; Android consumers provide the libvlc AAR.
+linkerOpts = -lvlc

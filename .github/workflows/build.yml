@@ -1,0 +1,197 @@
+name: Build
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS (arm64 + x64 klibs, JVM/native player)
+    runs-on: macos-15
+    env:
+      VLC_LIBRARY_DIR: /Applications/VLC.app/Contents/MacOS/lib
+      VLC_PLUGIN_PATH: /Applications/VLC.app/Contents/MacOS/plugins
+      SDL_VIDEO_DRIVER: dummy
+    steps:
+      - uses: ./.github/actions/checkout-vlc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install VLC
+        run: brew install --cask vlc
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile and test
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :vlc-kmp:jvmTest
+          :vlc-kmp:macosArm64Test
+          :vlc-kmp:compileKotlinMacosArm64
+          :vlc-kmp:compileKotlinMacosX64
+          :jni-jvm-darwin-aarch64:build
+          :jni-jvm-darwin-x86_64:build
+
+      - name: Run native player headless
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :examples:player:linkDebugExecutableMacosArm64
+          && VLC_KMP_FRAMES=120 VLC_KMP_NO_AUDIO=1
+          VLC_KMP_FILE="$PWD/examples/player/src/commonMain/resources/sample.mp4"
+          ./examples/player/build/bin/macosArm64/debugExecutable/player.kexe
+
+      - name: Run JVM player headless
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :examples:player:jvmRun
+          --args="--no-audio --frames 120 --file $PWD/examples/player/src/commonMain/resources/sample.mp4"
+
+  linux:
+    name: Linux (x64 + arm64 + mingw klibs, JVM/native player)
+    runs-on: ubuntu-latest
+    env:
+      VLC_LIBRARY_DIR: /usr/lib/x86_64-linux-gnu
+      SDL_VIDEO_DRIVER: dummy
+    steps:
+      - uses: ./.github/actions/checkout-vlc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install VLC and MinGW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvlc-dev vlc-plugin-base \
+            gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile and test
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :vlc-kmp:jvmTest
+          :vlc-kmp:compileKotlinLinuxX64
+          :vlc-kmp:compileKotlinLinuxArm64
+          :vlc-kmp:compileKotlinMingwX64
+          :jni-jvm-linux-x86_64:build
+
+      - name: Run native player headless
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :examples:player:linkDebugExecutableLinuxX64
+          && VLC_KMP_FRAMES=120 VLC_KMP_NO_AUDIO=1
+          VLC_KMP_FILE="$PWD/examples/player/src/commonMain/resources/sample.mp4"
+          ./examples/player/build/bin/linuxX64/debugExecutable/player.kexe
+
+      - name: Run JVM player headless
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :examples:player:jvmRun
+          --args="--no-audio --frames 120 --file $PWD/examples/player/src/commonMain/resources/sample.mp4"
+
+  windows:
+    name: Windows (mingw klib, JVM tests, JNI)
+    runs-on: windows-latest
+    env:
+      VLC_LIBRARY_DIR: C:\Program Files\VideoLAN\VLC
+      VLC_PLUGIN_PATH: C:\Program Files\VideoLAN\VLC\plugins
+    steps:
+      - uses: ./.github/actions/checkout-vlc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install VLC, CMake and Ninja
+        shell: pwsh
+        run: |
+          choco install vlc --no-progress -y
+          choco install cmake ninja --no-progress -y
+          echo "C:\Program Files\CMake\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\Program Files\VideoLAN\VLC" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile and test
+        shell: cmd
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :vlc-kmp:jvmTest
+          :vlc-kmp:compileKotlinMingwX64
+          :jni-jvm-windows-x86_64:build
+
+  android:
+    name: Android (four ABIs, AAR, example APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/checkout-vlc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Android NDK, platform and CMake
+        run: |
+          yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
+            --install "ndk;27.0.12077973" "platforms;android-37" "cmake;3.22.1" >/dev/null
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build Android AAR and example
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :vlc-kmp:compileKotlinAndroidNativeArm64
+          :vlc-kmp:compileKotlinAndroidNativeArm32
+          :vlc-kmp:compileKotlinAndroidNativeX64
+          :vlc-kmp:compileKotlinAndroidNativeX86
+          :android-jvm:assembleRelease
+          :examples:player:android:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-example
+          path: examples/player/android/build/outputs/apk/debug/*.apk
+
+  web:
+    name: Web (js + wasmJs, browser bundle, npm staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/checkout-vlc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile JS/Wasm and stage the npm package
+        run: >
+          ./gradlew --no-daemon --stacktrace
+          :vlc-kmp:compileKotlinJs
+          :vlc-kmp:compileKotlinWasmJs
+          :vlc-kmp:assembleWasmNpm
+          :examples:player:copyWebAssets
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-player
+          path: examples/player/build/browserApp
