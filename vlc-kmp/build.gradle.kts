@@ -229,15 +229,10 @@ mavenPublishing {
 // ==================== wasm: npm package ====================
 val npmPackageVersion: String = run {
     val projectVersion = project.version.toString()
-    val semver = if (Regex("^\\d+\\.\\d+\\.\\d+\\.\\d+$").matches(projectVersion)) {
-        projectVersion.substringBeforeLast('.') + "-" + projectVersion.substringAfterLast('.')
-    } else {
-        projectVersion
-    }
-    require(Regex("^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$").matches(semver)) {
+    require(Regex("^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$").matches(projectVersion)) {
         "Project version '$projectVersion' is not valid npm semver"
     }
-    semver
+    projectVersion
 }
 val wasmExecutableDir = layout.buildDirectory.dir(
     "compileSync/wasmJs/main/productionExecutable/kotlin",

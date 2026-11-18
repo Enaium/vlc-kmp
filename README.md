@@ -50,6 +50,12 @@ flowchart TB
 - `examples/player/` — SDL3 + Dear ImGui player for JVM, native, Android and wasm.
 - `.github/workflows/` — build/test and publish pipelines.
 
+## Versioning
+
+Published artifacts use `<kmp-version>-fixed.<upstream-version>`, for example
+`1.0.0-fixed.3.0.24`: `1.0.0` is this KMP module's version and `3.0.24` is the
+pinned libVLC release.
+
 ## Using the library
 
 ### Common API
@@ -111,7 +117,7 @@ single `UnsatisfiedLinkError` naming the attempted paths.
 ### Android
 
 ```kotlin
-implementation("cn.enaium.vlc:vlc-kmp:<version>")
+implementation("cn.enaium.vlc:vlc-kmp:1.0.0-fixed.3.0.24")
 ```
 
 The Android variant depends on `org.videolan.android:libvlc-all`, which ships

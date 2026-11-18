@@ -9,6 +9,8 @@ plugins {
 
 allprojects {
     group = "cn.enaium.vlc"
-    // Pinned libVLC release (3.0.24) plus this library's own revision.
-    version = "3.0.24.1"
+    // Artifact version: <kmp-version>-fixed.<pinned-upstream-version>.
+    val kmpVersion = "1.0.0"
+    val vlcVersion = "3.0.24"
+    version = "$kmpVersion-fixed.$vlcVersion"
 }
