@@ -175,7 +175,7 @@ jobs:
         run: |
           yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
           ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
-            --install "ndk;27.0.12077973" "platforms;android-37" "cmake;3.22.1" >/dev/null
+            --install "ndk;27.0.12077973" "platforms;android-37.0" "cmake;3.22.1" >/dev/null
 
       - uses: gradle/actions/setup-gradle@v6
 

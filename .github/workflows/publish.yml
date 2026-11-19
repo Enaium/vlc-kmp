@@ -2,6 +2,11 @@ name: Publish
 
 "on":
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: "Comma-separated: macos,linux,android,web,windows (empty = all)"
+        required: false
+        default: ""
 
 # Maven Central coordinates are immutable, so every publication is produced by
 # exactly one runner:
@@ -21,6 +26,7 @@ permissions:
 jobs:
   publish-macos:
     name: Publish macOS (metadata, jvm, Apple klibs, darwin JNI)
+    if: inputs.jobs == '' || contains(inputs.jobs, 'macos')
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
@@ -62,6 +68,7 @@ jobs:
 
   publish-linux:
     name: Publish Linux (linuxX64/linuxArm64/mingwX64 klibs, linux JNI)
+    if: inputs.jobs == '' || contains(inputs.jobs, 'linux')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -107,6 +114,7 @@ jobs:
 
   publish-android:
     name: Publish Android (native klibs + AAR)
+    if: inputs.jobs == '' || contains(inputs.jobs, 'android')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -126,7 +134,7 @@ jobs:
         run: |
           yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
           ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
-            --install "ndk;27.0.12077973" "platforms;android-37" "cmake;3.22.1" >/dev/null
+            --install "ndk;27.0.12077973" "platforms;android-36" "cmake;3.22.1" >/dev/null
 
       - uses: gradle/actions/setup-gradle@v6
 
@@ -153,6 +161,7 @@ jobs:
 
   publish-web:
     name: Publish js/wasmJs klibs and npm package
+    if: inputs.jobs == '' || contains(inputs.jobs, 'web')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -196,6 +205,7 @@ jobs:
 
   publish-windows:
     name: Publish Windows JNI artifact
+    if: inputs.jobs == '' || contains(inputs.jobs, 'windows')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
