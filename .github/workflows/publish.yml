@@ -23,7 +23,13 @@ jobs:
     name: Publish macOS (metadata, jvm, Apple klibs, darwin JNI)
     runs-on: macos-15
     steps:
-      - uses: ./.github/actions/checkout-vlc
+      - uses: actions/checkout@v6
+
+      - name: Checkout VLC submodule
+        shell: bash
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive
 
       - uses: actions/setup-java@v5
         with:
@@ -58,7 +64,13 @@ jobs:
     name: Publish Linux (linuxX64/linuxArm64/mingwX64 klibs, linux JNI)
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-vlc
+      - uses: actions/checkout@v6
+
+      - name: Checkout VLC submodule
+        shell: bash
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive
 
       - uses: actions/setup-java@v5
         with:
@@ -97,7 +109,13 @@ jobs:
     name: Publish Android (native klibs + AAR)
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-vlc
+      - uses: actions/checkout@v6
+
+      - name: Checkout VLC submodule
+        shell: bash
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive
 
       - uses: actions/setup-java@v5
         with:
@@ -137,7 +155,13 @@ jobs:
     name: Publish js/wasmJs klibs and npm package
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-vlc
+      - uses: actions/checkout@v6
+
+      - name: Checkout VLC submodule
+        shell: bash
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive
 
       - uses: actions/setup-java@v5
         with:
@@ -174,7 +198,13 @@ jobs:
     name: Publish Windows JNI artifact
     runs-on: windows-latest
     steps:
-      - uses: ./.github/actions/checkout-vlc
+      - uses: actions/checkout@v6
+
+      - name: Checkout VLC submodule
+        shell: bash
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive
 
       - uses: actions/setup-java@v5
         with:
