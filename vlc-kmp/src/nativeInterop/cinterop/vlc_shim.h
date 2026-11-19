@@ -11,11 +11,18 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <vlc/vlc.h>
 
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+
+static inline void vlc_kmp_copy_pixels(void *destination, const void *source, int size)
+{
+    if (destination != NULL && source != NULL && size > 0)
+        memcpy(destination, source, (size_t) size);
+}
 
 static inline void vlc_kmp_ensure_plugin_path(void)
 {

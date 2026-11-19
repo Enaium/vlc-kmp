@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.cinterop.*
 import kotlin.native.Platform
-import platform.posix.memcpy
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val EVENT_BUFFER = 64
@@ -292,7 +291,9 @@ private val videoDisplay: libvlc_video_display_cb = staticCFunction { opaque: CO
         try {
             if (!context.active) return@staticCFunction
             val buffer = context.buffer ?: return@staticCFunction
-            memcpy(context.pixels.usePinned { it.addressOf(0) }, buffer, context.pixels.size.convert())
+            context.pixels.usePinned {
+                vlc_kmp_copy_pixels(it.addressOf(0), buffer, context.pixels.size)
+            }
             context.sink.onFrame(
                 VlcVideoFrame(
                     width = context.width,
